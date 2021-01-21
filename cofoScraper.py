@@ -41,8 +41,8 @@ import json
 import pickle
 from urllib.request import urlopen
 from selenium import webdriver
-# from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options as chromeOptions
+from selenium.webdriver.firefox.options import Options as firefoxOptions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -281,16 +281,18 @@ class scraper():
     def parseDataFromHomepage(self, url):
         # page limit and test cases.
         # specification from another url.
-        options = Options()
-        # Options.headless = True
-        options.add_argument('-headless')
-        driver = webdriver.Firefox(
-            executable_path='./geckodriver', options=options)
-        # host = '127.0.0.1'
-        # driver = webdriver.Remote(
-        #     command_executor=f"http://{host}:4444/wd/hub",
-        #     desired_capabilities=DesiredCapabilities.FIREFOX,
-        #     options=options)
+
+        # For chrome driver
+        options = chromeOptions()
+        options.headless = True
+        driver = webdriver.Chrome(
+            executable_path='./chromedriver', options=options)
+
+        # For firefox driver
+        # options = firefoxOptions()
+        # options.add_argument('-headless')
+        # driver = webdriver.Firefox(
+        #     executable_path='./geckodriver', options=options)
 
         driver.get(url)
         time.sleep(2)
