@@ -19,20 +19,18 @@ codes of accepted submissions.
 7. Replacing Xpath instances with CSS selectors: Not done
 
 @Requirements:
-    1. Beautiful soup
-    2. Selenium
-    3. Chrome driver (latest version compatible with the version of chrome browser in the machine)
+    1. Beautiful soup (bs4)
+    2. Selenium (V3.14)
+    3. Chrome/firefox webdriver (latest version compatible with the version of chrome/firefox browser in the machine)
     4. requests module
-    5. tee for logging the stdout info
 
 @Run:
     1. Make sure to run getScrapedList.py before this to get the updated pkl of already scraped problems from CodeForces
     and ensure correct path has been mentioned for 'alreadyExisting.pkl' file in this scraper.
     2. Make sure that the path of the sub-dirs to be created in the main dir (as mentioned in line 78) is correct and 
     exist already.
-    3. Change the version of the log file to be created, for every run (Changes in L.No: 378)
-    4. Run this cmd for scraping: 'python cofoScraper.py | tee stdoutLogsVXX.log'
-    5. Make sure to change the XX with required version of stdoutlogs depending on the run.
+    3. Run this cmd for scraping: 'python cofoScraper.py <dataset-dir> <language-ID> <firefox/chrome>'
+    (Considers chrome webdriver by default)
 """
 
 import requests
@@ -282,26 +280,30 @@ class scraper():
         # page limit and test cases.
         # specification from another url.
 
-        # For chrome driver
-        options = chromeOptions()
-        options.headless = True
-        driver = webdriver.Chrome(
-            executable_path='./chromedriver', options=options)
-
+        browser = sys.argv[3]
+        if browser == 'firefox':
         # For firefox driver
-        # options = firefoxOptions()
-        # options.add_argument('-headless')
-        # driver = webdriver.Firefox(
-        #     executable_path='./geckodriver', options=options)
+            options = firefoxOptions()
+            options.add_argument('-headless')
+            driver = webdriver.Firefox(
+                executable_path='./geckodriver', options=options)
+        else:
+        # For chrome driver
+            options = chromeOptions()
+            options.headless = True
+            driver = webdriver.Chrome(
+                executable_path='./chromedriver', options=options)
 
         driver.get(url)
         time.sleep(2)
 
+        # Select Accepted submissions
         form = driver.find_element(By.CSS_SELECTOR, "form.status-filter")
         selectVerdictName = Select(
             form.find_element(By.CSS_SELECTOR, "#verdictName"))
         selectVerdictName.select_by_value("OK")
-
+        
+        # Select programming language
         selectLanguage = Select(form.find_element(
             By.CSS_SELECTOR, "#programTypeForInvoker"))
         try:
@@ -380,7 +382,6 @@ class scraper():
                     driver.refresh()
                     time.sleep(1.5)
 
-
 def driverFunc(listOfMetadata):
     language = listOfMetadata[0]
     contestId = listOfMetadata[1]
@@ -389,13 +390,12 @@ def driverFunc(listOfMetadata):
     _ = scraper(language, contestId, index, tags)
     return
 
-
 if __name__ == "__main__":
     logfile = sys.argv[1]+'logs.log'
     logging.basicConfig(
         # filename='/home/cs20mtech01004/cofoscraper/test/testlogs3.log',
         filename=logfile,
-        filemode='w',
+        filemode='a',
         level=logging.INFO,
         format='%(levelname)s --> %(asctime)s --> %(name)s: %(message)s',
         datefmt='%d-%b-%y %H:%M:%S'
@@ -406,18 +406,18 @@ if __name__ == "__main__":
     # JSON of fetched metadata
     jsonData = json.loads(apiData.decode('utf-8'))
     listsOfMetadata = []
-    # Specify the language of the source codes to be scraped
-    # language = 'cpp.g++17'
     language = sys.argv[2]
-
     alreadyExisting = []
-    # Absolute path of alreadyExisting.pkl file
-    #with open('alreadyExisting.pkl', 'rb') as f:
-     #   alreadyExisting = pickle.load(f)
+
+    # alreadyExisting.pkl file in current working directory
+    with open('alreadyExisting.pkl', 'rb') as f:
+       alreadyExisting = pickle.load(f)
+    # scrapeList.pkl file in current working directory
     with open('scrapeList.pkl', 'rb') as f:
         scrapeList = pickle.load(f)
 
-    print('Length of alreadyExisting list: {}'.format(len(alreadyExisting)))
+    print('Length of alreadyExisting list: {}.'.format(len(alreadyExisting)))
+    print('Length of scrapeList: {}.'.format(len(scrapeList)))
 
     for metaData in jsonData['result']['problems']:
         tags = metaData['tags']
@@ -426,11 +426,10 @@ if __name__ == "__main__":
 
         dirName = str(contestId) + '-' + index
         # if dirName not in alreadyExisting:
-#        if dirName not in alreadyExisting and dirName in scrapeList:
-        if dirName in scrapeList:
+        # if dirName in scrapeList:
+        if dirName not in alreadyExisting and dirName in scrapeList:
             listsOfMetadata.append([language, contestId, index, tags])
-
-    print('Length of updated listsOfMetadata list: {}'.format(len(listsOfMetadata)))
+    print('Length of updated listsOfMetadata list: {}.'.format(len(listsOfMetadata)))
 
     # with Pool(4) as p:
     #     p.map(driverFunc, listsOfMetadata)
@@ -439,7 +438,13 @@ if __name__ == "__main__":
 
     print("Root Directory: {}".format(ROOT_DIR))
     print("Language-ID: {}".format(language))
+    if sys.argv[3] == 'firefox':
+        print("Webdriver: {}".format('Firefox.'))
+    else:
+        print("Webdriver: {}".format('Chrome.'))
+
     for listOfMetadata in listsOfMetadata:
         driverFunc(listOfMetadata)
-    print("Scraping done successfully")
-    print("Dataset is created in {}". format(ROOT_DIR))
+
+    print("Scraping done successfully.")
+    print("Dataset is created in {}.".format(ROOT_DIR))
