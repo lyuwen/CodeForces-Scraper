@@ -298,16 +298,17 @@ class scraper():
         time.sleep(2)
 
         # Select Accepted submissions
-        form = driver.find_element(By.CSS_SELECTOR, "form.status-filter")
-        selectVerdictName = Select(
-            form.find_element(By.CSS_SELECTOR, "#verdictName"))
-        selectVerdictName.select_by_value("OK")
-        
-        # Select programming language
-        selectLanguage = Select(form.find_element(
-            By.CSS_SELECTOR, "#programTypeForInvoker"))
         try:
+            form = driver.find_element(By.CSS_SELECTOR, "form.status-filter")
+            selectVerdictName = Select(
+                form.find_element(By.CSS_SELECTOR, "#verdictName"))
+            selectVerdictName.select_by_value("OK")
+            
+            # Select programming language
+            selectLanguage = Select(form.find_element(
+                By.CSS_SELECTOR, "#programTypeForInvoker"))
             selectLanguage.select_by_value(self.LANGUAGE)
+            
         except Exception as error:
             logging.exception('Origin: parseDataFromHomepage; URL: {} --> {}'.format(
                 driver.current_url, error))
