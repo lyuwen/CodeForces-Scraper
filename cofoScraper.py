@@ -52,6 +52,7 @@ import logging
 from multiprocessing import Pool
 from bs4 import BeautifulSoup
 import sys
+import argparse
 
 # ROOT_DIR = '/home/cs20mtech01004/cofoscraper/test/testdata3'
 ROOT_DIR = sys.argv[1]
@@ -183,7 +184,6 @@ class scraper():
 
         numElements = len(
             driver.find_elements_by_css_selector('a.view-source'))
-        self.subCounter += numElements
         print(
             "Number of elements on page #{}: {}".format(self.pageNo, numElements))
 
@@ -205,8 +205,14 @@ class scraper():
                             EC.visibility_of_element_located((By.CSS_SELECTOR, '#facebox .close')))
 
                         codeFileName = ''
-                        if(self.LANGUAGE == 'c.gcc11'):
+                        if self.LANGUAGE == 'c.gcc11':
                             codeFileName = subID + '.c'
+                        elif self.LANGUAGE == 'python.3':
+                            codeFileName = subID + '.py'
+                        elif self.LANGUAGE == 'java8':
+                            codeFileName = subID + '-8.java'
+                        elif self.LANGUAGE == 'java11':
+                            codeFileName = subID + '-11.java'
                         else:
                             codeFileName = subID + '.cpp'
 
@@ -256,6 +262,7 @@ class scraper():
                     self.pageNo, elementCount))
                 print('Time taken to scrape source codes from page #{}: {:.3f} seconds'.format(
                     self.pageNo, time.time()-start))
+                self.subCounter += elementCount
 
             self.pageNo += 1
             if (self.pageNo > self.page_limit) or (self.subCounter >= 750):
@@ -282,13 +289,13 @@ class scraper():
 
         browser = sys.argv[3]
         if browser == 'firefox':
-        # For firefox driver
+            # For firefox driver
             options = firefoxOptions()
             options.add_argument('-headless')
             driver = webdriver.Firefox(
                 executable_path='./geckodriver', options=options)
         else:
-        # For chrome driver
+            # For chrome driver
             options = chromeOptions()
             options.headless = True
             driver = webdriver.Chrome(
@@ -303,12 +310,12 @@ class scraper():
             selectVerdictName = Select(
                 form.find_element(By.CSS_SELECTOR, "#verdictName"))
             selectVerdictName.select_by_value("OK")
-            
+
             # Select programming language
             selectLanguage = Select(form.find_element(
                 By.CSS_SELECTOR, "#programTypeForInvoker"))
             selectLanguage.select_by_value(self.LANGUAGE)
-            
+
         except Exception as error:
             logging.exception('Origin: parseDataFromHomepage; URL: {} --> {}'.format(
                 driver.current_url, error))
@@ -392,6 +399,11 @@ def driverFunc(listOfMetadata):
     return
 
 if __name__ == "__main__":
+    #sys.argv[1] - data dir
+    #sys.argv[2] - language-id
+    #sys.argv[3] - chrome/firefox
+    #sys.argv[4] - true/false
+
     logfile = sys.argv[1]+'logs.log'
     logging.basicConfig(
         # filename='/home/cs20mtech01004/cofoscraper/test/testlogs3.log',
@@ -411,25 +423,29 @@ if __name__ == "__main__":
     alreadyExisting = []
 
     # alreadyExisting.pkl file in current working directory
-    with open('alreadyExisting.pkl', 'rb') as f:
-       alreadyExisting = pickle.load(f)
+    if sys.argv[4] == 'false':
+        with open('alreadyExisting.pkl', 'rb') as f:
+            alreadyExisting = pickle.load(f)
+        print('Length of alreadyExisting list: {}.'.format(len(alreadyExisting)))
+
     # scrapeList.pkl file in current working directory
     with open('scrapeList.pkl', 'rb') as f:
         scrapeList = pickle.load(f)
-
-    print('Length of alreadyExisting list: {}.'.format(len(alreadyExisting)))
     print('Length of scrapeList: {}.'.format(len(scrapeList)))
 
     for metaData in jsonData['result']['problems']:
         tags = metaData['tags']
         index = metaData['index']
         contestId = metaData['contestId']
-
         dirName = str(contestId) + '-' + index
-        # if dirName not in alreadyExisting:
-        # if dirName in scrapeList:
-        if dirName not in alreadyExisting and dirName in scrapeList:
-            listsOfMetadata.append([language, contestId, index, tags])
+
+        if sys.argv[4] == 'false':
+            # If not the first time run
+            if dirName not in alreadyExisting and dirName in scrapeList:
+                listsOfMetadata.append([language, contestId, index, tags])
+        else:
+            if dirName in scrapeList:
+                listsOfMetadata.append([language, contestId, index, tags])
     print('Length of updated listsOfMetadata list: {}.'.format(len(listsOfMetadata)))
 
     # with Pool(4) as p:
@@ -437,8 +453,8 @@ if __name__ == "__main__":
     #     p.terminate()
     #     p.join()
 
-    print("Root Directory: {}".format(ROOT_DIR))
-    print("Language-ID: {}".format(language))
+    print("Root Directory: {}.".format(ROOT_DIR))
+    print("Language-ID: {}.".format(language))
     if sys.argv[3] == 'firefox':
         print("Webdriver: {}".format('Firefox.'))
     else:
@@ -446,6 +462,5 @@ if __name__ == "__main__":
 
     for listOfMetadata in listsOfMetadata:
         driverFunc(listOfMetadata)
-
     print("Scraping done successfully.")
     print("Dataset is created in {}.".format(ROOT_DIR))
