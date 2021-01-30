@@ -1,5 +1,6 @@
 # CodeForces-Scraper
-Selenium-Python based scraper for scraping the source codes and other information associated with the problems/questions openly available on [Codeforces] (https://codeforces.com/) website.
+Selenium-Python based scraper for scraping the source codes and other information associated with the problems/questions openly availabe on
+[Codeforces](https://codeforces.com/) website.
 
 ## Pre-requisites
 * Python (>=3.8.5)
