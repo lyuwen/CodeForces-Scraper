@@ -3,14 +3,11 @@ Selenium-Python based scraper for scraping the source codes and other informatio
 [Codeforces](https://codeforces.com/) website.
 
 ## About the directories
-1. *COFO*
-This is a reference to our work (under review) _COFO: COdeFOrces dataset for ProgramClassification, Recognition and Tagging_ and contains a readme to provide a high level overview about the proposed dataset and related work done.
+1. **COFO** - This is a reference to our work (under review) _COFO: COdeFOrces dataset for ProgramClassification, Recognition and Tagging_ and contains a readme to provide a high level overview about the proposed dataset and related work done.
 
-2. *Images*
-It contains the images used in this repo.
+2. **Images** - It contains the images used in this repo.
 
-3. *Utility*
-It contains various utility python and bash scripts, useful while scraping the data using this scraper.
+3. **Utility** - It contains various utility python and bash scripts, useful while scraping the data using this scraper.
 
 ## Pre-requisites
 * Python (>=3.8.5)
@@ -18,7 +15,7 @@ It contains various utility python and bash scripts, useful while scraping the d
 * Beautifulsoup4 (bs4)
 * requests
 
-All packages can be installed either using `conda`or `pip`.
+**All packages can be installed either using `conda`or `pip`.**
 
 ##### NOTE
  Do check the compatible versions of chrome/firefox driver with the already installed chrome/firefox browser installed in your system. This repo contains the latest versions of chrome and firefox drivers tested on Chrome browser (87.0.4280.88 (Official Build) (64-bit)) and Mozilla firefox (V84.0 (64-bit))
@@ -43,10 +40,11 @@ All packages can be installed either using `conda`or `pip`.
    * python.3 (Python-3)
    * java8 (Java-8)
    * java11 (Java-11)
+   
 ### Flow of scraping
 <img src="./images/scraper+tree.jpg" width=auto height=auto>
 
-'scrapeList.pkl' denotes a subset of problems to be scraped. Codeforces API return information about a lot of problems. Using scrapeList.pkl will make the scraping confined to just 2.6K problems out of all of the problems.
+4. 'scrapeList.pkl' denotes a subset of problems to be scraped. Codeforces API return information about a lot of problems. Using scrapeList.pkl will make the scraping confined to just 2.6K problems out of all of the problems.
 
 ## Utility scripts
 * `getScrapedList.py`
