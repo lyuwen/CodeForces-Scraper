@@ -2,6 +2,16 @@
 Selenium-Python based scraper for scraping the source codes and other information associated with the problems/questions openly availabe on
 [Codeforces](https://codeforces.com/) website.
 
+## About the directories
+1. *COFO*
+This is a reference to our work (under review) _COFO: COdeFOrces dataset for ProgramClassification, Recognition and Tagging_ and contains a readme to provide a high level overview about the proposed dataset and related work done.
+
+2. *Images*
+It contains the images used in this repo.
+
+3. *Utility*
+It contains various utility python and bash scripts, useful while scraping the data using this scraper.
+
 ## Pre-requisites
 * Python (>=3.8.5)
 * Selenium (3.14)
