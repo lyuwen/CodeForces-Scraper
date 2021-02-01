@@ -1,5 +1,5 @@
 # CodeForces-Scraper
-Selenium-Python based scraper for scraping the source codes and other information associated with the problems/questions openly availabe on
+Selenium-Beautifulsoup-Python based scraper for scraping the source codes and other information associated with the problems/questions openly availabe on
 [Codeforces](https://codeforces.com/) website.
 
 ## About the directories
@@ -40,24 +40,26 @@ Selenium-Python based scraper for scraping the source codes and other informatio
    * python.3 (Python-3)
    * java8 (Java-8)
    * java11 (Java-11)
+
+4. 'scrapeList.pkl' denotes a subset of problems to be scraped. Codeforces API return information about a lot of problems. Using scrapeList.pkl will make the scraping confined to just 2.6K problems out of all of the problems.
    
 ### Flow of scraping
 <img src="./images/scraper+tree.jpg" width=auto height=auto>
 
-4. 'scrapeList.pkl' denotes a subset of problems to be scraped. Codeforces API return information about a lot of problems. Using scrapeList.pkl will make the scraping confined to just 2.6K problems out of all of the problems.
-
 ## Utility scripts
 * `getScrapedList.py`
-This script analyses the dataset directory and creates a pickle file `alreadyExisting.pkl`, which is consumed by the scraper to not scrape already scraped problems. Due to connectivity issues or maybe due to the driver-based issues, scraping may terminate. This script handles the scraping process for such situations.
-Usage:
+This script analyses the dataset directory and creates a pickle file `alreadyExisting.pkl`, which is consumed by the scraper to not scrape already scraped problems. Due to connectivity issues or maybe due to the driver-based issues, scraping may terminate. This script handles the scraping process in such scenarios.
+**Usage:**
 `python getScrapedList.py <dataset-dir>`
 
 * `getRange.sh`
 This script provides the stats on collected data. Total number of directories, total number of source codes, total number of classes and so on. Most importantly, it tells about data distribution.
-Usage:
+**Usage:**
 `bash getRange.sh <dataset-dir>`
 
 * `getStat.sh`
 This is a minimal version of the above script which focussed on just the number of directories and number of source code files in it.
-Usage:
+**Usage:**
 `bash getStat.sh <dataset-dir>`
+
+**Make sure to create a directory with name `<dataset-dir>` in the working directory/location of your preference before using these scripts.**
