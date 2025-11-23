@@ -57,6 +57,13 @@ import sys
 
 ROOT_DIR = sys.argv[1]
 
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/122.0.0.0 Safari/537.36"
+}
+
+
 class scraper():
 
     def __init__(self, LANGUAGE, contestId, index, tags):
@@ -111,42 +118,87 @@ class scraper():
 
     def parseSpecification(self, url):
         try:
-            req = requests.get(url)
+            req = requests.get(url, headers=DEFAULT_HEADERS, timeout=15)
+            req.raise_for_status()
             time.sleep(1.5)
             soup = BeautifulSoup(req.text, 'html.parser')
             question = dict()
 
             # Get title and other metadata
             ref = soup.find('div', {'class': 'problem-statement'})
-            question['title'] = ref.find('div', {'class': 'title'}).text
-            question['input'] = ref.find('div', {'class': 'input-file'}).text[5:]
-            question['output'] = ref.find('div', {'class': 'output-file'}).text[6:]
+            if ref is None:
+                msg = 'problem-statement block not found; page layout or request may have changed.'
+                print('ERROR --> Origin: parseSpecification; URL: {} --> {}'.format(url, msg))
+                logging.error('Origin: parseSpecification; URL: {} --> {}'.format(url, msg))
+                return
+
+            title_node = ref.find('div', {'class': 'title'})
+            question['title'] = title_node.get_text(strip=True) if title_node else 'Not Found'
+
+            def _clean_property(node, prefix):
+                if node is None:
+                    return 'Not Found'
+                text = node.get_text(separator=' ', strip=True)
+                if text.lower().startswith(prefix.lower()):
+                    text = text[len(prefix):].strip(': ').strip()
+                return text
+
+            question['input'] = _clean_property(ref.find('div', {'class': 'input-file'}), 'Input')
+            question['output'] = _clean_property(ref.find('div', {'class': 'output-file'}), 'Output')
 
             # Question text
-            c = ref.findAll('p')
+            c = ref.find_all('p')
             q = self.get_text(c)
             question['problem-statement'] = q
 
             # Input specification
             refI = soup.find('div', {'class': 'input-specification'})
-            c = refI.findAll('p')
+            c = refI.find_all('p') if refI else []
             inp = self.get_text(c)
             question['input-specification'] = inp
 
             # Output specification
             refO = soup.find('div', {'class': 'output-specification'})
-            c = refO.findAll('p')
+            c = refO.find_all('p') if refO else []
             out = self.get_text(c)
             question['output-specification'] = out
+
+            # sample tests
+            refS = soup.find('div', {'class': 'sample-tests'})
+            #
+            inps = refS.find_all('div', {'class': 'input'}) or []
+            oups = refS.find_all('div', {'class': 'output'}) or []
+            assert len(inps) == len(oups)
+            test_cases = []
+            for i, o in zip(inps, oups):
+                ii = i.find_all('pre') if inp else []
+                oo = o.find_all('pre') if inp else []
+                test_cases.append({
+                    "input": self.get_text(ii),
+                    "output": self.get_text(oo),
+                })
+            #
+            question['sample-tests'] = test_cases
+
+            # notes
+            refO = soup.find('div', {'class': 'note'})
+            c = refO.find_all('p') if refO else []
+            out = self.get_text(c)
+            question['note'] = out
 
             # Complete Spec
             specification = ''
             for key, value in question.items():
+                if not isinstance(value, str):
+                    value = str(value)
                 specification += key+'\n'+value+'\n\n'
 
             filename = os.path.join(self.dirPath, 'specification.txt')
             with open(filename, 'w') as specFile:
                 specFile.write(specification)
+            filename = os.path.join(self.dirPath, 'specification.json')
+            with open(filename, 'w') as specFile:
+                print(json.dumps(question, ensure_ascii=False, indent=2), file=specFile)
             return
 
         except Exception as error:
@@ -206,9 +258,9 @@ class scraper():
                             code = ''
                             doc = li.get_attribute('innerHTML')
                             soup = BeautifulSoup(doc, 'html.parser')
-                            init = soup.findAll('li')
+                            init = soup.find_all('li')
                             for ele in init:
-                                spans = ele.findAll('span')
+                                spans = ele.find_all('span')
                                 codeLine = ''
                                 for span in spans:
                                     for word in span:
