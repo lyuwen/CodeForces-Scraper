@@ -186,6 +186,12 @@ class scraper():
             out = self.get_text(c)
             question['note'] = out
 
+            # difficulty
+            span = soup.find("span", class_="tag-box", title="Difficulty")
+            value = span.get_text(strip=True)  # "*800"
+            difficulty = value.lstrip("*")     # "800" if you want to drop the star
+            question['difficulty'] = difficulty
+
             # Complete Spec
             specification = ''
             for key, value in question.items():
@@ -321,86 +327,88 @@ class scraper():
             options.headless = True
             driver = webdriver.Chrome(executable_path='./chromedriver', options=options)
 
-        driver.get(url)
-        time.sleep(2)
-
         try:
-            # Select Accepted submissions
-            form = driver.find_element(By.CSS_SELECTOR, "form.status-filter")
-            selectVerdictName = Select(
-                form.find_element(By.CSS_SELECTOR, "#verdictName"))
-            selectVerdictName.select_by_value("OK")
+            driver.get(url)
+            time.sleep(2)
 
-            # Select programming language
-            selectLanguage = Select(form.find_element(
-                By.CSS_SELECTOR, "#programTypeForInvoker"))
-            selectLanguage.select_by_value(self.LANGUAGE)
-
-        except Exception as error:
-            logging.exception('Origin: parseDataFromHomepage; URL: {} --> {}'.format(
-                driver.current_url, error))
-            print("No such element exception raised. Closing driver instance...")
-            driver.close()
-            return
-
-        driver.find_element(By.CSS_SELECTOR, ".status-filter-box-content+ div input:nth-child(1)").click()
-        time.sleep(0.25)
-
-        # Setting the page limit to page_limit
-        pageNoList = []
-        pageNoList = driver.find_elements(By.CSS_SELECTOR, '.page-index a')
-
-        if len(pageNoList) != 0:
-            self.page_limit = int(pageNoList[-1].text)
-            print('Number of pages to be scraped: {}'.format(self.page_limit))
-
-        # Fetching the test cases from the very first submission on page.
-        spec_attempts, spec_flag = 1, 0
-        while spec_attempts <= 3 and spec_flag == 0:
             try:
-                content = driver.find_element(By.XPATH, '//*[@id="pageContent"]/div[3]/div[6]/table/tbody/tr[2]/td').text
-                if content != 'No items':
-                    filename = 'testcases.txt'
-                    filepath = os.path.join(self.dirPath, filename)
-                    driver.find_element_by_css_selector('a.view-source').click()
-                    time.sleep(0.5)
-                    WebDriverWait(driver, 40).until(
-                        EC.visibility_of_element_located((By.CSS_SELECTOR, '#facebox .close')))
+                # Select Accepted submissions
+                form = driver.find_element(By.CSS_SELECTOR, "form.status-filter")
+                selectVerdictName = Select(
+                    form.find_element(By.CSS_SELECTOR, "#verdictName"))
+                selectVerdictName.select_by_value("OK")
 
-                    with open(filepath, 'w') as file:
-                        for testcase in driver.find_elements(By.XPATH, '//*[@id="facebox"]/div/div/div/div/div'):
-                            file.write(testcase.text+'\n')
-                    print('Created testcases.txt...')
-
-                    driver.find_element(
-                        By.CSS_SELECTOR, '#facebox .close').click()
-                    time.sleep(0.25)
-                    WebDriverWait(driver, 30).until(
-                        EC.invisibility_of_element_located((By.CSS_SELECTOR, '#facebox .close')))
-                    spec_flag = 1
-                    status = self.parseSourceCodes(driver)
-                    if status == "Done":
-                        print('Closing all current driver instances...')
-                        driver.quit()
-                        return
-                else:
-                    print('Closing driver instance as value of content is --{}--'.format(content))
-                    driver.close()
-                    return
+                # Select programming language
+                selectLanguage = Select(form.find_element(
+                    By.CSS_SELECTOR, "#programTypeForInvoker"))
+                selectLanguage.select_by_value(self.LANGUAGE)
 
             except Exception as error:
-                if spec_attempts > 3:
-                    print('ERROR --> Origin: parseDataFromHomepage; URL: {} - -> Attempt  # {}'.format(
-                          driver.current_url, spec_attempts))
-                    logging.exception('Origin: parseDataFromHomepage; URL: {} --> Attempt #{}'.format(
-                        driver.current_url, spec_attempts))
-                    print('Closing driver instance as max limit of attempts reached in parseDataFromHomepage...')
-                    driver.close()
-                    return
-                else:
-                    spec_attempts += 1
-                    driver.refresh()
-                    time.sleep(1.5)
+                logging.exception('Origin: parseDataFromHomepage; URL: {} --> {}'.format(
+                    driver.current_url, error))
+                print("No such element exception raised. Closing driver instance...")
+                return
+
+            driver.find_element(By.CSS_SELECTOR, ".status-filter-box-content+ div input:nth-child(1)").click()
+            time.sleep(0.25)
+
+            # Setting the page limit to page_limit
+            pageNoList = []
+            pageNoList = driver.find_elements(By.CSS_SELECTOR, '.page-index a')
+
+            if len(pageNoList) != 0:
+                self.page_limit = int(pageNoList[-1].text)
+                print('Number of pages to be scraped: {}'.format(self.page_limit))
+
+            # Fetching the test cases from the very first submission on page.
+            spec_attempts, spec_flag = 1, 0
+            while spec_attempts <= 3 and spec_flag == 0:
+                try:
+                    content = driver.find_element(By.XPATH, '//*[@id="pageContent"]/div[3]/div[6]/table/tbody/tr[2]/td').text
+                    if content != 'No items':
+                        filename = 'testcases.txt'
+                        filepath = os.path.join(self.dirPath, filename)
+                        driver.find_element_by_css_selector('a.view-source').click()
+                        time.sleep(0.5)
+                        WebDriverWait(driver, 40).until(
+                            EC.visibility_of_element_located((By.CSS_SELECTOR, '#facebox .close')))
+
+                        with open(filepath, 'w') as file:
+                            for testcase in driver.find_elements(By.XPATH, '//*[@id="facebox"]/div/div/div/div/div'):
+                                file.write(testcase.text+'\n')
+                        print('Created testcases.txt...')
+
+                        driver.find_element(
+                            By.CSS_SELECTOR, '#facebox .close').click()
+                        time.sleep(0.25)
+                        WebDriverWait(driver, 30).until(
+                            EC.invisibility_of_element_located((By.CSS_SELECTOR, '#facebox .close')))
+                        spec_flag = 1
+                        status = self.parseSourceCodes(driver)
+                        if status == "Done":
+                            print('Closing all current driver instances...')
+                            return
+                    else:
+                        print('Closing driver instance as value of content is --{}--'.format(content))
+                        return
+
+                except Exception as error:
+                    if spec_attempts > 3:
+                        print('ERROR --> Origin: parseDataFromHomepage; URL: {} - -> Attempt  # {}'.format(
+                              driver.current_url, spec_attempts))
+                        logging.exception('Origin: parseDataFromHomepage; URL: {} --> Attempt #{}'.format(
+                            driver.current_url, spec_attempts))
+                        print('Closing driver instance as max limit of attempts reached in parseDataFromHomepage...')
+                        return
+                    else:
+                        spec_attempts += 1
+                        driver.refresh()
+                        time.sleep(1.5)
+        finally:
+            try:
+                driver.quit()
+            except Exception as quit_error:
+                logging.exception('Origin: parseDataFromHomepage; Error quitting driver --> {}'.format(quit_error))
 
 def driverFunc(listOfMetadata):
     language = listOfMetadata[0]
